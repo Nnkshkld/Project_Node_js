@@ -15,8 +15,21 @@ const generateToken = async (user) => {
     return token;
 };
 
-const invalidateToken = async (token) => {
-    await JWToken.deleteOne({token});
+
+const checkTokenCount = async (req) => {
+    const {email} = req.body;
+
+    const tokenCount = await JWToken.countDocuments({userEmail: email});
+    if (tokenCount > 3) {
+        const tokensToDelete = await JWToken.find({userEmail: email})
+            .sort({createdAt: 1})
+            .limit(tokenCount - 3)
+
+        const tokenIds = tokensToDelete.map(token => token._id);
+        await JWToken.deleteMany({_id: {$in: tokenIds}});
+    }
+
+    return JWToken.find({userEmail: email}).sort({createdAt: -1}).limit(3);
 };
 
-export {generateToken, invalidateToken};
+export {generateToken, checkTokenCount};

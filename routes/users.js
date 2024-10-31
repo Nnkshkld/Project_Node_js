@@ -1,7 +1,7 @@
 import express from 'express';
 
-import Users  from "../models/userModel.js";
-import {generateToken} from "../core/utils.js";
+import Users from "../models/userModel.js";
+import {checkTokenCount, generateToken} from "../core/utils.js";
 
 const router = express.Router();
 
@@ -50,6 +50,7 @@ router.post('/login', async (req, res) => {
         }
 
         const token = await generateToken(existingUser)
+        await checkTokenCount(req);
 
         return res.status(200).send(token);
     } catch (error) {
