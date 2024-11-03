@@ -6,7 +6,7 @@ import {ItemAvailability} from "../core/constants.js";
 
 const router = express.Router();
 
-router.post("/add-item", authMiddleware, async (req, res) => {
+router.post("/create-item", authMiddleware, async (req, res) => {
     try {
         const item = new Items({
             owner: req.user._id,
