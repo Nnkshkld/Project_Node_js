@@ -68,25 +68,24 @@ router.post("/add-item", authMiddleware, async (req, res) => {
     }
 });
 
-
 router.patch("/edit-order", authMiddleware, async (req, res) => {
     try {
         const userId = req.user._id;
-        const { id, items } = req.body;
+        const {id, items} = req.body;
 
-        const order = await Orders.findOne({ _id: id, userId: userId });
+        const order = await Orders.findOne({_id: id, userId: userId});
         if (!order) {
-            return res.status(404).json({ message: "Order not found" });
+            return res.status(404).json({message: "Order not found"});
         }
 
         let totalPrice = 0;
         let totalQuantity = 0;
         for (const item of items) {
-            const { itemId, quantity } = item;
+            const {itemId, quantity} = item;
 
             const foundItem = await Items.findById(itemId);
             if (!foundItem) {
-                return res.status(404).json({ message: `Item with ID ${itemId} not found` });
+                return res.status(404).json({message: `Item with ID ${itemId} not found`});
             }
 
             totalPrice += foundItem.price * quantity;
@@ -105,10 +104,9 @@ router.patch("/edit-order", authMiddleware, async (req, res) => {
 
     } catch (error) {
         console.error("Error:", error);
-        return res.status(400).json({ message: "Error updating order" });
+        return res.status(400).json({message: "Error updating order"});
     }
 });
-
 
 router.delete("/cancel-order", authMiddleware, async (req, res) => {
     try {
