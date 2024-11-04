@@ -37,14 +37,14 @@ router.post("/add-item", authMiddleware, async (req, res) => {
         const userId = req.user._id;
         const {itemId, quantity} = req.body;
 
-        const itemQuantity = quantity || 1;
-
         const item = await Items.findById(itemId);
         if (!item) {
             return res.status(404).json({message: "Item not found"});
         }
 
+        const itemQuantity = quantity || 1;
         const itemTotalPrice = item.price * itemQuantity;
+
         let order = await Orders.findOne({userId, orderStatus: "processing"}).sort({createdAt: -1});
         if (!order) {
             order = new Orders({
@@ -72,25 +72,43 @@ router.post("/add-item", authMiddleware, async (req, res) => {
 router.patch("/edit-order", authMiddleware, async (req, res) => {
     try {
         const userId = req.user._id;
-        const {id} = req.body;
+        const { id, items } = req.body;
 
-        const order = await Orders.findOne({_id: id, userId: userId});
+        const order = await Orders.findOne({ _id: id, userId: userId });
         if (!order) {
-            return res.status(404).json({message: "Order not found"});
+            return res.status(404).json({ message: "Order not found" });
         }
-        if (req.body.items) order.items = req.body.items;
 
-        // if (req.body.totalPrice) order.totalPrice = req.body.totalPrice;
-        // if (req.body.amount) order.amount = req.body.amount;
+        let totalPrice = 0;
+        let totalQuantity = 0;
+        for (const item of items) {
+            const { itemId, quantity } = item;
 
+            const foundItem = await Items.findById(itemId);
+            if (!foundItem) {
+                return res.status(404).json({ message: `Item with ID ${itemId} not found` });
+            }
+
+            totalPrice += foundItem.price * quantity;
+            totalQuantity += quantity;
+        }
+
+        order.items = req.body.items;
+        order.totalPrice = totalPrice;
+        order.amount = totalQuantity;
         await order.save();
 
-        return res.status(200).json(order);
+        return res.status(200).json({
+            message: "Order updated successfully",
+            order
+        });
 
     } catch (error) {
-        return res.status(400).json({message: "Error updating order"});
+        console.error("Error:", error);
+        return res.status(400).json({ message: "Error updating order" });
     }
 });
+
 
 router.delete("/cancel-order", authMiddleware, async (req, res) => {
     try {
