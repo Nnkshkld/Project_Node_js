@@ -3,13 +3,14 @@ import express from "express";
 import authMiddleware from "../middleware/auth.js";
 import Orders from "../models/orderModel.js";
 import Items from "../models/itemModel.js";
+import paginationMiddleware from "../middleware/pagination.js";
+import {paginateQuery} from "../core/utils.js";
 
 const router = express.Router();
 
 router.post("/create", authMiddleware, async (req, res) => {
     try {
         const userId = req.user._id;
-        console.log(req.body)
 
         const lastOrder = await Orders.findOne({userId, orderStatus: "processing"}).sort({createdAt: -1});
         if (lastOrder) {
@@ -141,26 +142,31 @@ router.get("/find-order/:id", async (req, res) => {
     }
 });
 
-router.get("/get-all-orders", authMiddleware, async (req, res) => {
+router.get("/get-all-orders", authMiddleware, paginationMiddleware, async (req, res) => {
     try {
-        const orders = await Orders.find({});
+        const {page, limit} = req.pagination;
+        const filter = {}
+        const result = await paginateQuery(Orders, filter, page, limit);
+        res.status(200).json(result);
 
-        res.status(200).json(orders);
     } catch (error) {
         res.status(400).json({message: "Error retrieving orders"});
     }
 });
 
-router.get("/get-all-user-orders/:userId", async (req, res) => {
-    const {userId} = req.params
+router.get("/get-all-user-orders/:userId", authMiddleware, paginationMiddleware, async (req, res) => {
+    const {userId} = req.params;
 
     try {
-        const orders = await Orders.find({userId: userId});
+        const {page, limit} = req.pagination;
+        const filter = {userId};
 
-        res.status(200).json(orders);
+        const result = await paginateQuery(Orders, filter, page, limit);
+        res.status(200).json(result);
     } catch (error) {
+        console.error("Error retrieving orders:", error);
         res.status(400).json({message: "Error retrieving orders"});
     }
-
 });
+
 export default router;

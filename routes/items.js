@@ -1,8 +1,10 @@
 import express from "express";
 
 import authMiddleware from "../middleware/auth.js";
+import paginationMiddleware from "../middleware/pagination.js"
 import Items from "../models/itemModel.js";
 import {ItemAvailability} from "../core/constants.js";
+import {paginateQuery} from "../core/utils.js";
 
 const router = express.Router();
 
@@ -83,7 +85,7 @@ router.get("/find-by-id/:itemId", async (req, res) => {
 
 });
 
-router.get("/get-all-items", async (req, res) => {
+router.get("/get-all-items", paginationMiddleware, async (req, res) => {
     try {
         const filter = {};
 
@@ -97,10 +99,13 @@ router.get("/get-all-items", async (req, res) => {
                 : ItemAvailability.NOT_AVAILABLE;
         }
 
-        const items = await Items.find(filter);
-        res.status(200).json(items);
+        const {page, limit} = req.pagination;
+        const result = await paginateQuery(Items, filter, page, limit)
+
+        res.status(200).json(result);
+
     } catch (error) {
-        res.status(400).json({ message: "Error retrieving items" });
+        res.status(400).json({message: "Error retrieving items"});
     }
 });
 

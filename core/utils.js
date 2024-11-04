@@ -32,4 +32,23 @@ const checkTokenCount = async (req) => {
     return JWToken.find({userEmail: email}).sort({createdAt: -1}).limit(3);
 };
 
-export {generateToken, checkTokenCount};
+async function paginateQuery(model, filter = {}, page = 1, limit = 5) {
+    const skip = (page - 1) * limit;
+
+    const [data, totalItems] = await Promise.all([
+        model.find(filter).skip(skip).limit(limit),
+        model.countDocuments(filter)
+    ]);
+
+    return {
+        pagination: {
+            totalItems,
+            totalPages: Math.ceil(totalItems / limit),
+            currentPage: page,
+            itemsPerPage: limit
+        },
+        data
+    };
+}
+
+export {generateToken, checkTokenCount, paginateQuery};
