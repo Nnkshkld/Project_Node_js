@@ -17,7 +17,6 @@ router.post("/create", authMiddleware, async (req, res) => {
             lastOrder.orderStatus = "closed";
             await lastOrder.save();
         }
-
         const newOrder = new Orders({
             userId: userId,
             items: [{itemId: req.body.itemId, quantity: req.body.amount}],
@@ -29,14 +28,14 @@ router.post("/create", authMiddleware, async (req, res) => {
 
     } catch (error) {
         return res.status(400).json({message: 'Error creating order'});
-        // return res.status(400).json(error.message);
     }
 });
 
 router.post("/add-item", authMiddleware, async (req, res) => {
     try {
         const userId = req.user._id;
-        const {itemId, quantity} = req.body;
+        const itemId = req.body.itemId;
+        const quantity = req.body.quantity;
 
         const item = await Items.findById(itemId);
         if (!item) {
@@ -65,7 +64,6 @@ router.post("/add-item", authMiddleware, async (req, res) => {
 
     } catch (error) {
         return res.status(400).json({message: 'Error adding item to order'});
-        // return res.status(400).json(error.message);
     }
 });
 
